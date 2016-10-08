@@ -82,8 +82,6 @@ public class SkinnedMeshCollider : MonoBehaviour
                 nodeWeights[bw.boneIndex3].weights.Add( new VertexWeight( i, localPt, bw.weight3 ) );
             }
         }
-
-		//WeldVertices(ref vertices, ref triangles, Mathf.Epsilon, 2);
 	}
 
 	public void UpdateCollisionMesh()
@@ -142,10 +140,12 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 			Ray testRay = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
+			Gizmos.color = Color.white;
 			Gizmos.DrawRay(Camera.main.transform.position, (Camera.main.transform.position + Camera.main.transform.forward * 10) - Camera.main.transform.position);
+
 			RaycastHit hit;
 
-			if (TriangleRayIntersection(a, b, c, testRay, out hit))
+			if (Utilities.TriangleRayIntersection(a, b, c, testRay, out hit))
 			{
 				Gizmos.color = Color.red;
 
@@ -153,71 +153,10 @@ public class SkinnedMeshCollider : MonoBehaviour
 				Gizmos.DrawLine(b, c);
 				Gizmos.DrawLine(c, a);
 
-				Gizmos.color = Color.green;
+				Gizmos.color = Color.yellow;
 
-				Gizmos.DrawWireSphere(hit.point, 0.1f);
+				Gizmos.DrawLine(hit.point, hit.point + (hit.normal * 1));
 			}
 		}
 	}
-
-	private bool TriangleRayIntersection(Vector3 p1, Vector3 p2, Vector3 p3, Ray ray, out RaycastHit hit)
-     {
-     	 hit = new RaycastHit();
-
-         // Vectors from p1 to p2/p3 (edges)
-         Vector3 e1, e2;  
- 
-         Vector3 p, q, t;
-         float det, invDet, u, v;
- 
-         //Find vectors for two edges sharing vertex/point p1
-         e1 = p2 - p1;
-         e2 = p3 - p1;
- 
-         // calculating determinant 
-         p = Vector3.Cross(ray.direction, e2);
- 
-         //Calculate determinat
-         det = Vector3.Dot(e1, p);
- 
-         //if determinant is near zero, ray lies in plane of triangle otherwise not
-         if (det > - Mathf.Epsilon && det < Mathf.Epsilon) 
-         { 
-         	return false; 
-         }
-
-         invDet = 1.0f / det;
- 
-         //calculate distance from p1 to ray origin
-         t = ray.origin - p1;
-
-         //Calculate u parameter
-         u = Vector3.Dot(t, p) * invDet;
- 
-         //Check for ray hit
-         if (u < 0 || u > 1) { return false; }
- 
-         //Prepare to test v parameter
-         q = Vector3.Cross(t, e1);
- 
-         //Calculate v parameter
-         v = Vector3.Dot(ray.direction, q) * invDet;
- 
-         //Check for ray hit
-         if (v < 0 || u + v > 1) { return false; }
-
-		 float length = Vector3.Dot(e2, q) * invDet;
-
-		 if (length > Mathf.Epsilon)
-         { 
-             //ray does intersect
-             hit.distance = length;
-			 hit.point = ray.origin + (ray.direction * length);
-
-             return true;
-         }
- 
-         // No hit at all
-         return false;
-     }
 }
