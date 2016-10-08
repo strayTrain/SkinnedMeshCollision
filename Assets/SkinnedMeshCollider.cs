@@ -138,14 +138,14 @@ public class SkinnedMeshCollider : MonoBehaviour
 			b = transform.TransformPoint(vertices[triangles[i+1]]);
 			c = transform.TransformPoint(vertices[triangles[i+2]]);
 
-			Ray testRay = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+			//Ray testRay = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
 			Gizmos.color = Color.white;
-			Gizmos.DrawRay(Camera.main.transform.position, (Camera.main.transform.position + Camera.main.transform.forward * 10) - Camera.main.transform.position);
+			//Gizmos.DrawRay(Camera.main.transform.position, (Camera.main.transform.position + Camera.main.transform.forward * 10) - Camera.main.transform.position);
 
 			RaycastHit hit;
 
-			if (Utilities.TriangleRayIntersection(a, b, c, testRay, out hit))
+			/*if (Utilities.TriangleRayIntersection(a, b, c, testRay, out hit))
 			{
 				Gizmos.color = Color.red;
 
@@ -156,6 +156,15 @@ public class SkinnedMeshCollider : MonoBehaviour
 				Gizmos.color = Color.yellow;
 
 				Gizmos.DrawLine(hit.point, hit.point + (hit.normal * 1));
+			}*/
+
+			Gizmos.DrawWireSphere(Camera.main.transform.position, 0.5f);
+
+			if (Utilities.TriangleSphereIntersection(a, b, c, Camera.main.transform.position, 0.5f, out hit))
+			{
+				Gizmos.color = Color.red;
+				Gizmos.DrawLine(hit.point - new Vector3(0.2f, 0), hit.point + new Vector3(0.2f, 0));
+				Gizmos.DrawLine(hit.point - new Vector3(0, 0.2f), hit.point + new Vector3(0, 0.2f));
 			}
 		}
 	}

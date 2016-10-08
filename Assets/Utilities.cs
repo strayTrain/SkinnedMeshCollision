@@ -89,12 +89,61 @@ public static class Utilities
          return false;
      }
 
-	public static bool TriangleSphereIntersection(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 sphereOrigin, float sphereRadius, out RaycastHit hit, float rayCastDistance = Mathf.Infinity) 
+	public static bool TriangleSphereIntersection(Vector3 a, Vector3 b, Vector3 c, Vector3 sphereOrigin, float sphereRadius, out RaycastHit hit) 
 	{
 		hit = new RaycastHit();
 
-		// Step 1: Test against the triangle surface
+		Vector3 triangleNormal = Vector3.Cross(b - a, c - a).normalized;
 
-		return true;
+		// Step 1: Test against the triangle surface
+		if (TriangleRayIntersection(a, b, c, new Ray(sphereOrigin, -triangleNormal), out hit, sphereRadius))
+		{
+			return true;
+		}
+
+		// Step 2: Test against the triangle edges
+		/*Vector3 ba = b-a;
+		Vector3 bc = b-c;
+		Vector3 ca = c-a;
+
+		Vector3 t1 = Vector3.Project(sphereOrigin - b, ba);
+		Vector3 t2 = Vector3.Project(sphereOrigin - b, bc);
+		Vector3 t3 = Vector3.Project(sphereOrigin - c, ca);
+
+		Vector3 lowestT = Vector3.one * Mathf.Infinity;
+		bool wasLowestTFound = false;
+
+		if (t1.magnitude < sphereRadius && t1.magnitude < lowestT.magnitude)
+		{
+			lowestT = t1;
+			wasLowestTFound = true;
+		}
+
+		if (t2.magnitude < sphereRadius && t2.magnitude < lowestT.magnitude)
+		{
+			lowestT = t2;
+			wasLowestTFound = true;
+		}
+
+		if (t3.magnitude < sphereRadius && t3.magnitude < lowestT.magnitude)
+		{
+			lowestT = t3;
+			wasLowestTFound = true;
+		}
+
+		if (wasLowestTFound)
+		{
+			hit.distance = lowestT.magnitude;
+			hit.point = sphereOrigin + (lowestT * hit.distance);
+			hit.normal = triangleNormal;
+
+			hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, a, b, c);
+
+			Debug.Log("FOUND");
+
+			return true;
+		}*/
+
+		return false;
 	}
 }
