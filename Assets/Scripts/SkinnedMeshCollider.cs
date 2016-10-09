@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class SkinnedMeshCollider : MonoBehaviour 
 {
+	[System.Serializable]
 	private class VertexWeight
 	{
 	    public int index;
@@ -17,7 +18,8 @@ public class SkinnedMeshCollider : MonoBehaviour
 	        weight = w;
 	    }
 	}
-	 
+
+	[System.Serializable]
 	private class WeightList
 	{
 	    public Transform transform;
@@ -29,6 +31,8 @@ public class SkinnedMeshCollider : MonoBehaviour
 	    }
 	}
 
+	// Used to update the collision mesh
+	private Vector3[] tempVertices;
 	private Vector3[] vertices;
 	private int[] triangles;
 	private WeightList[] nodeWeights;
@@ -43,6 +47,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 		}
 
 		vertices = skinnedMesh.sharedMesh.vertices;
+		tempVertices = new Vector3[vertices.Length];
 		triangles = skinnedMesh.sharedMesh.triangles;
 
 		Vector3[] cachedVertices = skinnedMesh.sharedMesh.vertices;
@@ -85,9 +90,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 	}
 
 	public void UpdateCollisionMesh()
-	{
-		Vector3[] newVerts = new Vector3[vertices.Length];
-       
+	{       
         // Now get the local positions of all weighted indices
         int nodeWeightsLength = nodeWeights.Length;
         int nodeWeightCount = 0;
@@ -99,17 +102,17 @@ public class SkinnedMeshCollider : MonoBehaviour
 			for (int j = 0; j < nodeWeightCount; j++)
         	{
 				currentVertexWeight = nodeWeights[i].weights[j];
-				newVerts[currentVertexWeight.index] += nodeWeights[i].transform.localToWorldMatrix.MultiplyPoint3x4(currentVertexWeight.localPosition) * currentVertexWeight.weight;
+				tempVertices[currentVertexWeight.index] += nodeWeights[i].transform.localToWorldMatrix.MultiplyPoint3x4(currentVertexWeight.localPosition) * currentVertexWeight.weight;
         	}
         }
 
         // Now convert each point into local coordinates of this object.
-        for ( int i = 0 ; i < newVerts.Length ; i++ )
+        for ( int i = 0; i < tempVertices.Length; i++ )
         {
-            newVerts[i] = transform.InverseTransformPoint(newVerts[i]);
+            tempVertices[i] = transform.InverseTransformPoint(tempVertices[i]);
         }
  
-        vertices = newVerts;
+        vertices = tempVertices;
 	}
 
 	private void Start()
@@ -138,14 +141,14 @@ public class SkinnedMeshCollider : MonoBehaviour
 			b = transform.TransformPoint(vertices[triangles[i+1]]);
 			c = transform.TransformPoint(vertices[triangles[i+2]]);
 
-			//Ray testRay = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+			Ray testRay = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
 
 			Gizmos.color = Color.white;
-			//Gizmos.DrawRay(Camera.main.transform.position, (Camera.main.transform.position + Camera.main.transform.forward * 10) - Camera.main.transform.position);
+			Gizmos.DrawRay(Camera.main.transform.position, (Camera.main.transform.position + Camera.main.transform.forward * 10) - Camera.main.transform.position);
 
 			RaycastHit hit;
 
-			/*if (Utilities.TriangleRayIntersection(a, b, c, testRay, out hit))
+			if (SkinnedMeshCollisionUtilities.TriangleRayIntersection(a, b, c, testRay, out hit))
 			{
 				Gizmos.color = Color.red;
 
@@ -156,16 +159,37 @@ public class SkinnedMeshCollider : MonoBehaviour
 				Gizmos.color = Color.yellow;
 
 				Gizmos.DrawLine(hit.point, hit.point + (hit.normal * 1));
-			}*/
+			}
 
-			Gizmos.DrawWireSphere(Camera.main.transform.position, 0.5f);
+			/*Gizmos.DrawWireSphere(Camera.main.transform.position, 0.5f);
 
 			if (Utilities.TriangleSphereIntersection(a, b, c, Camera.main.transform.position, 0.5f, out hit))
 			{
 				Gizmos.color = Color.red;
 				Gizmos.DrawLine(hit.point - new Vector3(0.2f, 0), hit.point + new Vector3(0.2f, 0));
 				Gizmos.DrawLine(hit.point - new Vector3(0, 0.2f), hit.point + new Vector3(0, 0.2f));
+			}*/
+		}
+	}
+
+	private void VisualiseBoundingSphere(WeightList bone)
+	{
+		Vector3 averagePosition = bone.transform.position;
+		float maxDistance = 0;
+
+		for (int j = 0; j < bone.weights.Count; j++)
+		{
+			Vector3 currentVertexPosition = transform.TransformPoint(vertices[bone.weights[j].index]);
+			averagePosition = (averagePosition + currentVertexPosition) * 0.5f;
+
+			float currentDistance = Vector3.Distance(transform.position, currentVertexPosition);
+
+			if (currentDistance > maxDistance)
+			{
+				maxDistance = currentDistance;
 			}
 		}
+
+		Gizmos.DrawWireSphere(averagePosition, 0.2f);
 	}
 }

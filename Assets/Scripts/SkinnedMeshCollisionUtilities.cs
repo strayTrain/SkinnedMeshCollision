@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class Utilities
+public static class SkinnedMeshCollisionUtilities
 {
 	public static Vector3 GetBarycentricCoordinate(Vector3 pointInTriangle, Vector3 vertexA, Vector3 vertexB, Vector3 vertexC)
 	{
@@ -9,6 +9,7 @@ public static class Utilities
 		Vector3 v1 = vertexC - vertexA; 
 		Vector3 v2 = pointInTriangle - vertexA;
 
+		// Basically applying cramers rule
 	    float d00 = Vector3.Dot(v0, v0);
 		float d01 = Vector3.Dot(v0, v1);
 		float d11 = Vector3.Dot(v1, v1);
@@ -25,7 +26,7 @@ public static class Utilities
 		return barycentricCoordinate;
 	}
 
-	public static bool TriangleRayIntersection(Vector3 p1, Vector3 p2, Vector3 p3, Ray ray, out RaycastHit hit, float rayCastDistance = Mathf.Infinity)
+	public static bool TriangleRayIntersection(Vector3 a, Vector3 b, Vector3 c, Ray ray, out RaycastHit hit, float rayCastDistance = Mathf.Infinity)
      {
      	 hit = new RaycastHit();
 
@@ -36,8 +37,8 @@ public static class Utilities
          float determinant, inverseDeterminant, u, v;
  
          //Find vectors for two edges sharing vertex/point p1
-         edge1 = p2 - p1;
-         edge2 = p3 - p1;
+         edge1 = b - a;
+         edge2 = c - a;
  
          // calculating determinant 
          p = Vector3.Cross(ray.direction, edge2);
@@ -54,7 +55,7 @@ public static class Utilities
          inverseDeterminant = 1.0f / determinant;
  
          //calculate distance from p1 to ray origin
-         t = ray.origin - p1;
+         t = ray.origin - a;
 
          //Calculate u parameter
          u = Vector3.Dot(t, p) * inverseDeterminant;
@@ -80,7 +81,7 @@ public static class Utilities
 			 hit.point = ray.origin + (ray.direction * length);
 			 hit.normal = Vector3.Cross(edge1, edge2).normalized;
 
-			 hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, p1, p2, p3);
+			 hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, a, b, c);
 
              return true;
          }
