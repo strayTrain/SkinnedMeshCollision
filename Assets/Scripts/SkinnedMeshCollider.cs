@@ -20,7 +20,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 	}
 
 	[System.Serializable]
-	private class WeightList
+	private class Bone
 	{
 	    public Transform transform;
 	    public List<VertexWeight> weights;
@@ -53,7 +53,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 			sphereRadius = Mathf.Sqrt(maxDistance);
 	    }
 
-	    public WeightList()
+	    public Bone()
 	    {
 	        weights = new List<VertexWeight>();
 	    }
@@ -63,7 +63,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 	private Vector3[] tempVertices;
 	private Vector3[] vertices;
 	private int[] triangles;
-	private WeightList[] nodeWeights;
+	private Bone[] bones;
 
 	private SkinnedMeshRenderer skinnedMesh;
 
@@ -75,44 +75,47 @@ public class SkinnedMeshCollider : MonoBehaviour
 		}
 
 		vertices = skinnedMesh.sharedMesh.vertices;
-		tempVertices = new Vector3[vertices.Length];
 		triangles = skinnedMesh.sharedMesh.triangles;
+
+		tempVertices = new Vector3[vertices.Length];
 
 		Vector3[] cachedVertices = skinnedMesh.sharedMesh.vertices;
 		Matrix4x4[] cachedBindposes = skinnedMesh.sharedMesh.bindposes;
 		BoneWeight[] cachedBoneWeights = skinnedMesh.sharedMesh.boneWeights;
        
-        // Make a CWeightList for each bone in the skinned mesh
-		nodeWeights = new WeightList[skinnedMesh.bones.Length];
-		for ( int i = 0 ; i < skinnedMesh.bones.Length ; i++ )
+        // Make a bone for each bone in the skinned mesh
+		bones = new Bone[skinnedMesh.bones.Length];
+		for (int i = 0; i < skinnedMesh.bones.Length; i++)
         {
-            nodeWeights[i] = new WeightList();
-			nodeWeights[i].transform = skinnedMesh.bones[i];
+            bones[i] = new Bone();
+			bones[i].transform = skinnedMesh.bones[i];
         }
 
-        // Create a bone weight list for each bone, ready for quick calculation during an update...
+        // Create a vertex weight list for each bone, ready for quick calculation during an update...
         for ( int i = 0 ; i < cachedVertices.Length ; i++ )
         {
             BoneWeight bw = cachedBoneWeights[i];
+
+            // You can have up to 4 bones affecting a vertex
             if (bw.weight0 != 0.0f)
             {
                 Vector3 localPt = cachedBindposes[bw.boneIndex0].MultiplyPoint3x4( cachedVertices[i] );
-                nodeWeights[bw.boneIndex0].weights.Add( new VertexWeight( i, localPt, bw.weight0 ) );
+                bones[bw.boneIndex0].weights.Add( new VertexWeight( i, localPt, bw.weight0 ) );
             }
             if (bw.weight1 != 0.0f)
             {
                 Vector3 localPt = cachedBindposes[bw.boneIndex1].MultiplyPoint3x4( cachedVertices[i] );
-                nodeWeights[bw.boneIndex1].weights.Add( new VertexWeight( i, localPt, bw.weight1 ) );
+                bones[bw.boneIndex1].weights.Add( new VertexWeight( i, localPt, bw.weight1 ) );
             }
             if (bw.weight2 != 0.0f)
             {
                 Vector3 localPt = cachedBindposes[bw.boneIndex2].MultiplyPoint3x4( cachedVertices[i] );
-                nodeWeights[bw.boneIndex2].weights.Add( new VertexWeight( i, localPt, bw.weight2 ) );
+                bones[bw.boneIndex2].weights.Add( new VertexWeight( i, localPt, bw.weight2 ) );
             }
             if (bw.weight3 != 0.0f)
             {
                 Vector3 localPt = cachedBindposes[bw.boneIndex3].MultiplyPoint3x4( cachedVertices[i] );
-                nodeWeights[bw.boneIndex3].weights.Add( new VertexWeight( i, localPt, bw.weight3 ) );
+                bones[bw.boneIndex3].weights.Add( new VertexWeight( i, localPt, bw.weight3 ) );
             }
         }
 	}
@@ -120,7 +123,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 	public void UpdateCollisionMesh()
 	{       
         // Now get the local positions of all weighted indices
-        int nodeWeightsLength = nodeWeights.Length;
+        int nodeWeightsLength = bones.Length;
         int nodeWeightCount = 0;
         VertexWeight currentVertexWeight;
 
@@ -132,11 +135,13 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 		for (int i = 0; i < nodeWeightsLength; i++)
         {
-        	nodeWeightCount = nodeWeights[i].weights.Count;
+        	nodeWeightCount = bones[i].weights.Count;
+			Matrix4x4 currentLocalToWorldMatrix = bones[i].transform.localToWorldMatrix;
+
 			for (int j = 0; j < nodeWeightCount; j++)
         	{
-				currentVertexWeight = nodeWeights[i].weights[j];
-				tempVertices[currentVertexWeight.index] += nodeWeights[i].transform.localToWorldMatrix.MultiplyPoint3x4(currentVertexWeight.localPosition) * currentVertexWeight.weight;
+				currentVertexWeight = bones[i].weights[j];
+				tempVertices[currentVertexWeight.index] += currentLocalToWorldMatrix.MultiplyPoint3x4(currentVertexWeight.localPosition) * currentVertexWeight.weight;
         	}
         }
 
@@ -208,7 +213,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 		}
 	}
 
-	private void VisualiseBoundingSphere(WeightList bone)
+	private void VisualiseBoundingSphere(Bone bone)
 	{
 		Gizmos.DrawWireSphere(bone.transform.position, 0.1f);
 
