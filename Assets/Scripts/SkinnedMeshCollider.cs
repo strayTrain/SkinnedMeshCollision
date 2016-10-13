@@ -128,17 +128,17 @@ public class SkinnedMeshCollider : MonoBehaviour
         VertexWeight currentVertexWeight;
 
         // Clear out the temp vertices array
-        for (int i = 0; i < tempVertices.Length; i++)
+        for (int i = 0; i < tempVertices.Length; ++i)
         {
         	tempVertices[i] = Vector3.zero;
         }
 
-		for (int i = 0; i < nodeWeightsLength; i++)
+		for (int i = 0; i < nodeWeightsLength; ++i)
         {
         	nodeWeightCount = bones[i].weights.Count;
 			Matrix4x4 currentLocalToWorldMatrix = bones[i].transform.localToWorldMatrix;
 
-			for (int j = 0; j < nodeWeightCount; j++)
+			for (int j = 0; j < nodeWeightCount; ++j)
         	{
 				currentVertexWeight = bones[i].weights[j];
 				tempVertices[currentVertexWeight.index] += currentLocalToWorldMatrix.MultiplyPoint3x4(currentVertexWeight.localPosition) * currentVertexWeight.weight;
@@ -146,9 +146,10 @@ public class SkinnedMeshCollider : MonoBehaviour
         }
 
         // Now convert each point into local coordinates of this object.
-        for ( int i = 0; i < tempVertices.Length; i++ )
+        Matrix4x4 worldToLocalMatrix = transform.worldToLocalMatrix;
+        for ( int i = 0; i < tempVertices.Length; ++i )
         {
-            tempVertices[i] = transform.InverseTransformPoint(tempVertices[i]);
+            tempVertices[i] = worldToLocalMatrix.MultiplyPoint3x4(tempVertices[i]);
         }
  
         vertices = tempVertices;
