@@ -25,6 +25,34 @@ public class SkinnedMeshCollider : MonoBehaviour
 	    public Transform transform;
 	    public List<VertexWeight> weights;
 
+	    public void GetBoundingSphere(ref Vector3[] vertexArray, out Vector3 spherePosition, out float sphereRadius)
+	    {
+			spherePosition = Vector3.zero;
+	    	int weightCount = weights.Count;
+
+	    	// Get the average position
+			for (int i = 0; i < weightCount; i++)
+	    	{
+	    		spherePosition = (spherePosition + transform.TransformPoint(vertexArray[weights[i].index])) * 0.5f;
+	    	}
+
+	    	// Get the max distance
+	    	float maxDistance = 0;
+	    	float currentDistance = 0;
+
+			for (int i = 0; i < weightCount; i++)
+			{
+				currentDistance = (transform.TransformPoint(vertexArray[weights[i].index]) - transform.position).sqrMagnitude;
+
+				if (currentDistance > maxDistance)
+				{
+					maxDistance = currentDistance;
+				}	
+			}
+
+			sphereRadius = Mathf.Sqrt(maxDistance);
+	    }
+
 	    public WeightList()
 	    {
 	        weights = new List<VertexWeight>();
@@ -95,6 +123,12 @@ public class SkinnedMeshCollider : MonoBehaviour
         int nodeWeightsLength = nodeWeights.Length;
         int nodeWeightCount = 0;
         VertexWeight currentVertexWeight;
+
+        // Clear out the temp vertices array
+        for (int i = 0; i < tempVertices.Length; i++)
+        {
+        	tempVertices[i] = Vector3.zero;
+        }
 
 		for (int i = 0; i < nodeWeightsLength; i++)
         {
@@ -169,27 +203,27 @@ public class SkinnedMeshCollider : MonoBehaviour
 				Gizmos.DrawLine(hit.point - new Vector3(0.2f, 0), hit.point + new Vector3(0.2f, 0));
 				Gizmos.DrawLine(hit.point - new Vector3(0, 0.2f), hit.point + new Vector3(0, 0.2f));
 			}*/
+
+			//VisualiseBoundingSphere(nodeWeights[3]);
 		}
 	}
 
 	private void VisualiseBoundingSphere(WeightList bone)
 	{
-		Vector3 averagePosition = bone.transform.position;
-		float maxDistance = 0;
+		Gizmos.DrawWireSphere(bone.transform.position, 0.1f);
 
 		for (int j = 0; j < bone.weights.Count; j++)
 		{
-			Vector3 currentVertexPosition = transform.TransformPoint(vertices[bone.weights[j].index]);
-			averagePosition = (averagePosition + currentVertexPosition) * 0.5f;
+			Vector3 currentPoint = transform.TransformPoint(vertices[bone.weights[j].index]);
 
-			float currentDistance = Vector3.Distance(transform.position, currentVertexPosition);
-
-			if (currentDistance > maxDistance)
-			{
-				maxDistance = currentDistance;
-			}
+			Gizmos.DrawWireSphere(currentPoint, 0.1f);
 		}
 
-		Gizmos.DrawWireSphere(averagePosition, 0.2f);
+		Vector3 averagePos;
+		float radius;
+
+		bone.GetBoundingSphere(ref vertices, out averagePos, out radius);
+
+		Gizmos.DrawWireSphere(averagePos, radius);
 	}
 }

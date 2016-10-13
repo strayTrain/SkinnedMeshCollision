@@ -30,7 +30,7 @@ public class CharacterMovementController : MonoBehaviour {
 		transform.Rotate(0,Input.GetAxis("Mouse X"),0);
 		
 		//Do all the pistol stuff.
-		Pistol();
+		//Pistol();
 		
 		
 		if (controller.isGrounded) {
