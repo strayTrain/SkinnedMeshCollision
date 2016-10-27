@@ -73,11 +73,6 @@ public class DetectionTrigger : MonoBehaviour
 
     #region Unity Methods
 
-    public void Awake()
-    {
-        if (Collider) ;
-    }
-
     void OnTriggerEnter(Collider argCollider)
     {
         Debug.Log(argCollider.transform.GetInstanceID() + " " + argCollider.name);

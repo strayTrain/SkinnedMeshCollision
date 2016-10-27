@@ -1,6 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+public struct SkinnedMeshHit
+{
+	public float distance;
+	public Vector3 point;
+	public Vector3 normal;
+	public Vector3 barycentricCoordinate;
+	public int triangleIndex;
+}
+
 public static class SkinnedMeshCollisionUtilities
 {
 	public static Vector3 GetBarycentricCoordinate(Vector3 pointInTriangle, Vector3 vertexA, Vector3 vertexB, Vector3 vertexC)
@@ -26,9 +35,9 @@ public static class SkinnedMeshCollisionUtilities
 		return barycentricCoordinate;
 	}
 
-	public static bool TriangleRayIntersection(Vector3 a, Vector3 b, Vector3 c, Ray ray, out RaycastHit hit, float rayCastDistance = Mathf.Infinity)
+	public static bool TriangleRayIntersection(int triangleIndex, Vector3 a, Vector3 b, Vector3 c, Ray ray, out SkinnedMeshHit hit, float rayCastDistance = Mathf.Infinity)
      {
-     	 hit = new RaycastHit();
+		 hit = new SkinnedMeshHit();
 
          // Vectors from p1 to p2/p3 (edges)
          Vector3 edge1, edge2;  
@@ -76,12 +85,11 @@ public static class SkinnedMeshCollisionUtilities
 
 		 if (length > Mathf.Epsilon && length <= rayCastDistance)
          { 
-             //ray does intersect
              hit.distance = length;
 			 hit.point = ray.origin + (ray.direction * length);
 			 hit.normal = Vector3.Cross(edge1, edge2).normalized;
-
 			 hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, a, b, c);
+			 hit.triangleIndex = triangleIndex;
 
              return true;
          }
@@ -90,14 +98,14 @@ public static class SkinnedMeshCollisionUtilities
          return false;
      }
 
-	public static bool TriangleSphereIntersection(Vector3 a, Vector3 b, Vector3 c, Vector3 sphereOrigin, float sphereRadius, out RaycastHit hit) 
+	public static bool TriangleSphereIntersection(int triangleIndex, Vector3 a, Vector3 b, Vector3 c, Vector3 sphereOrigin, float sphereRadius, out SkinnedMeshHit hit) 
 	{
-		hit = new RaycastHit();
+		hit = new SkinnedMeshHit();
 
 		Vector3 triangleNormal = Vector3.Cross(b - a, c - a).normalized;
 
 		// Step 1: Test against the triangle surface
-		if (TriangleRayIntersection(a, b, c, new Ray(sphereOrigin, -triangleNormal), out hit, sphereRadius))
+		if (TriangleRayIntersection(triangleIndex, a, b, c, new Ray(sphereOrigin, -triangleNormal), out hit, sphereRadius))
 		{
 			return true;
 		}

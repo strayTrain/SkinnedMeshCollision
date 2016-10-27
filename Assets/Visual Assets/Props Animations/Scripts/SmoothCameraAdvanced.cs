@@ -82,7 +82,7 @@ class SmoothCameraAdvanced : MonoBehaviour
         set { Instance.lookAtOffset = value; }
     }
 
-    private Vector3 runtimeOffset = Vector3.zero;
+    //private Vector3 runtimeOffset = Vector3.zero;
     private static Vector3 RuntimeOffset
     {
         set { PanX.Current = value.x; }
