@@ -25,36 +25,60 @@ public class SkinnedMeshCollider : MonoBehaviour
 		public Transform BoneTransform;
 		public List<VertexWeight> Weights;
 
-		public void CalculateBoundingSphere(Vector3[] vertexArray, ref Vector3 sphereCentre, ref float radius)
+		private List<int> uniqueVertexIndices;
+		public List<int> UniqueVertexIndices { get {return uniqueVertexIndices;} }
+
+		public void CalculateBoundingSphere(Matrix4x4 localToWorldMatrix, Vector3[] vertexArray, ref Vector3 sphereCentre, ref float radius)
 		{
-			sphereCentre = Vector3.zero;
+			//sphereCentre = Vector3.zero;
 			radius = 0;
 
-			// Find the center of the sphere
-			for (int i = 0; i < Weights.Count; i++)
+			float x = 0, y = 0, z = 0;
+
+			int uniqueVertexIndicesCount = uniqueVertexIndices.Count;
+
+			// Start by finding the center of the sphere in local space
+			for (int i = 0; i < uniqueVertexIndicesCount; i++)
 			{
-				//sphereCentre += vertexArray[Weights[i].Index];
+				x += vertexArray[uniqueVertexIndices[i]].x;
+				y += vertexArray[uniqueVertexIndices[i]].y;
+				z += vertexArray[uniqueVertexIndices[i]].z;
+			}
 
-				Gizmos.DrawWireSphere(BoneTransform.localToWorldMatrix.MultiplyPoint3x4(vertexArray[Weights[i].Index]), 0.01f);
-			}	
+			sphereCentre = new Vector3(x/uniqueVertexIndicesCount, y/uniqueVertexIndicesCount, z/uniqueVertexIndicesCount);
 
-			// Calculate the radius
-			/*float currentDistance = 0;
-			for (int i = 0; i < Weights.Count; i++)
+			Vector3 longestDistance = Vector3.zero;
+			for (int i = 0; i < uniqueVertexIndices.Count; i++)
 			{
-				currentDistance = Vector3.SqrMagnitude(vertexArray[Weights[i].Index] - sphereCentre);
+				Vector3 currentDistance = (vertexArray[uniqueVertexIndices[i]] - sphereCentre);
 
-				if (currentDistance > radius)
+				if (currentDistance.sqrMagnitude > longestDistance.sqrMagnitude)
 				{
-					radius = currentDistance;
+					longestDistance = currentDistance;
 				}
-			}*/
-				
+			}
+
+			sphereCentre = localToWorldMatrix.MultiplyPoint3x4(sphereCentre);
+
+			longestDistance = new Vector3(longestDistance.x * BoneTransform.lossyScale.x, longestDistance.y * BoneTransform.lossyScale.y, longestDistance.z * BoneTransform.lossyScale.z);
+			radius = longestDistance.magnitude;
+		}
+
+		public void CalculateUniqueVertexIndices()
+		{
+			for (int i = 0; i < Weights.Count; i++)
+			{
+				if (!uniqueVertexIndices.Contains(Weights[i].Index))
+				{
+					uniqueVertexIndices.Add(Weights[i].Index);
+				}
+			}
 		}
 
 		public Bone()
 		{
 			Weights = new List<VertexWeight>();
+			uniqueVertexIndices = new List<int>();
 		}
 	}
 
@@ -69,6 +93,9 @@ public class SkinnedMeshCollider : MonoBehaviour
 	public Vector3[] Vertices {get {return vertices;}}
 	public int[] Triangles {get {return triangles;}}
 
+	public bool VisualiseBoundingSpheres = false;
+	public int BoneIndexToVisualise = 0;
+
 	public void ExtractMeshData()
 	{
 		if (skinnedMesh == null)
@@ -81,9 +108,8 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 		tempVertices = new Vector3[vertices.Length];
 
-		Vector3[] cachedVertices = skinnedMesh.sharedMesh.vertices;
-		Matrix4x4[] cachedBindposes = skinnedMesh.sharedMesh.bindposes;
-		BoneWeight[] cachedBoneWeights = skinnedMesh.sharedMesh.boneWeights;
+		Matrix4x4[] bindPoses = skinnedMesh.sharedMesh.bindposes;
+		BoneWeight[] boneWeights = skinnedMesh.sharedMesh.boneWeights;
        
 		// Make a bone for each bone in the skinned mesh
 		bones = new Bone[skinnedMesh.bones.Length];
@@ -94,31 +120,36 @@ public class SkinnedMeshCollider : MonoBehaviour
 		}
 
 		// Create a vertex weight list for each bone, ready for quick calculation during an update...
-		for (int i = 0; i < cachedVertices.Length; i++)
+		for (int i = 0; i < vertices.Length; i++)
 		{
-			BoneWeight bw = cachedBoneWeights[i];
+			BoneWeight currentBoneWeight = boneWeights[i];
 
 			// You can have up to 4 bones affecting a vertex
-			if (bw.weight0 != 0.0f)
+			if (currentBoneWeight.weight0 != 0.0f)
 			{
-				Vector3 localPt = cachedBindposes[bw.boneIndex0].MultiplyPoint3x4(cachedVertices[i]);
-				bones[bw.boneIndex0].Weights.Add(new VertexWeight(i, localPt, bw.weight0));
+				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex0].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex0].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight0));
 			}
-			if (bw.weight1 != 0.0f)
+			if (currentBoneWeight.weight1 != 0.0f)
 			{
-				Vector3 localPt = cachedBindposes[bw.boneIndex1].MultiplyPoint3x4(cachedVertices[i]);
-				bones[bw.boneIndex1].Weights.Add(new VertexWeight(i, localPt, bw.weight1));
+				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex1].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex1].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight1));
 			}
-			if (bw.weight2 != 0.0f)
+			if (currentBoneWeight.weight2 != 0.0f)
 			{
-				Vector3 localPt = cachedBindposes[bw.boneIndex2].MultiplyPoint3x4(cachedVertices[i]);
-				bones[bw.boneIndex2].Weights.Add(new VertexWeight(i, localPt, bw.weight2));
+				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex2].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex2].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight2));
 			}
-			if (bw.weight3 != 0.0f)
+			if (currentBoneWeight.weight3 != 0.0f)
 			{
-				Vector3 localPt = cachedBindposes[bw.boneIndex3].MultiplyPoint3x4(cachedVertices[i]);
-				bones[bw.boneIndex3].Weights.Add(new VertexWeight(i, localPt, bw.weight3));
+				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex3].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex3].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight3));
 			}
+		}
+
+		for (int i = 0; i < bones.Length; i++)
+		{
+			bones[i].CalculateUniqueVertexIndices();
 		}
 	}
 
@@ -219,26 +250,41 @@ public class SkinnedMeshCollider : MonoBehaviour
 		UpdateCollisionMesh();
 	}
 
-	private void OnDrawGizmosSelected()
+	private void OnValidate()
 	{
-		if (bones == null || skinnedMesh == null)
+		if (bones == null)
 		{
 			ExtractMeshData();
 		}
 
-		/*for (int i = 0; i < bones.Length; i++)
+		BoneIndexToVisualise = Mathf.Clamp(BoneIndexToVisualise, 0, bones.Length - 1);
+	}
+
+	private void OnDrawGizmosSelected()
+	{
+		if (VisualiseBoundingSpheres)
 		{
-			float radius = 0;
+			if (bones == null || skinnedMesh == null)
+			{
+				ExtractMeshData();
+			}
+
 			Vector3 sphereCenter = Vector3.zero;
+			float radius = 0;
 
-			bones[i].CalculateBoundingSphere(vertices, ref sphereCenter, ref radius);
+			bones[BoneIndexToVisualise].CalculateBoundingSphere(transform.localToWorldMatrix, vertices, ref sphereCenter, ref radius);
 
-			//Gizmos.DrawWireSphere(sphereCenter, radius);
-		}*/
+			Gizmos.DrawSphere(sphereCenter, radius);
 
-		for (int i = 0; i < vertices.Length; i++)
-		{
-			Gizmos.DrawWireSphere(transform.localToWorldMatrix.MultiplyPoint3x4(vertices[i]), 0.1f);
+			int uniqueVertexIndicesCount = bones[BoneIndexToVisualise].UniqueVertexIndices.Count;
+
+			Gizmos.color = Color.blue;
+
+			for (int i = 0; i < uniqueVertexIndicesCount; i++)
+			{
+				int currentIndex = bones[BoneIndexToVisualise].UniqueVertexIndices[i];
+				Gizmos.DrawWireSphere(transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentIndex]), 0.1f);
+			}
 		}
 	}
 }
