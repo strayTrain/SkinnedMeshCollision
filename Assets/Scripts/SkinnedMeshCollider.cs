@@ -8,6 +8,8 @@ public class SkinnedMeshCollider : MonoBehaviour
 	private class VertexWeight
 	{
 		public int Index;
+
+		// The triangles that this vertex is in
 		public Vector3 LocalPosition;
 		public float Weight;
 
@@ -27,6 +29,9 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 		private List<int> uniqueVertexIndices;
 		public List<int> UniqueVertexIndices { get {return uniqueVertexIndices;} }
+
+		private List<int> triangleIndices;
+		public List<int> TriangleIndices {get {return triangleIndices;} }
 
 		public void CalculateBoundingSphere(Matrix4x4 localToWorldMatrix, Vector3[] vertexArray, ref Vector3 sphereCentre, ref float radius)
 		{
@@ -75,10 +80,34 @@ public class SkinnedMeshCollider : MonoBehaviour
 			}
 		}
 
+		public void CalculateTriangles(Vector3[] vertexArray, int[] triangleArray)
+		{
+			// Go through the triangle array
+			triangleIndices = new List<int>(1000);
+			for (int i = 0; i < triangleArray.Length; i += 3)
+			{
+				//Debug.Log(i);
+				// Go thorugh every weight
+				/*for (int j = 0; j < Weights.Count; j++)
+				{
+					int currentIndex = Weights[j].Index;
+
+					if (triangleArray[i] == currentIndex || triangleArray[i+1] == currentIndex || triangleArray[i+3] == currentIndex)
+					{
+						if (triangleIndices.Contains(i))
+						{
+							TriangleIndices.Add(i);
+						}
+					}
+				}*/
+			}
+		}
+
 		public Bone()
 		{
 			Weights = new List<VertexWeight>();
 			uniqueVertexIndices = new List<int>();
+			triangleIndices = new List<int>();
 		}
 	}
 
@@ -150,6 +179,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 		for (int i = 0; i < bones.Length; i++)
 		{
 			bones[i].CalculateUniqueVertexIndices();
+			bones[i].CalculateTriangles(vertices, triangles);
 		}
 	}
 
@@ -274,16 +304,31 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 			bones[BoneIndexToVisualise].CalculateBoundingSphere(transform.localToWorldMatrix, vertices, ref sphereCenter, ref radius);
 
-			Gizmos.DrawSphere(sphereCenter, radius);
+			Gizmos.DrawWireSphere(sphereCenter, radius);
 
 			int uniqueVertexIndicesCount = bones[BoneIndexToVisualise].UniqueVertexIndices.Count;
 
 			Gizmos.color = Color.blue;
 
+			// Draw the verts
 			for (int i = 0; i < uniqueVertexIndicesCount; i++)
 			{
 				int currentIndex = bones[BoneIndexToVisualise].UniqueVertexIndices[i];
 				Gizmos.DrawWireSphere(transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentIndex]), 0.1f);
+			}
+
+			// Draw the triangles
+			for (int i = 0; i < bones[BoneIndexToVisualise].TriangleIndices.Count; i++)
+			{
+				int currentTriangleIndex = bones[BoneIndexToVisualise].TriangleIndices[i];
+
+				Vector3 a = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex]);
+				Vector3 b = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex+1]);
+				Vector3 c = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex+2]);
+
+				Gizmos.DrawLine(a, b);
+				Gizmos.DrawLine(b, c);
+				Gizmos.DrawLine(c, a);
 			}
 		}
 	}
