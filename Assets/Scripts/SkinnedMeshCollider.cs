@@ -25,6 +25,33 @@ public class SkinnedMeshCollider : MonoBehaviour
 		public Transform BoneTransform;
 		public List<VertexWeight> Weights;
 
+		public void CalculateBoundingSphere(Vector3[] vertexArray, ref Vector3 sphereCentre, ref float radius)
+		{
+			sphereCentre = Vector3.zero;
+			radius = 0;
+
+			// Find the center of the sphere
+			for (int i = 0; i < Weights.Count; i++)
+			{
+				//sphereCentre += vertexArray[Weights[i].Index];
+
+				Gizmos.DrawWireSphere(BoneTransform.localToWorldMatrix.MultiplyPoint3x4(vertexArray[Weights[i].Index]), 0.01f);
+			}	
+
+			// Calculate the radius
+			/*float currentDistance = 0;
+			for (int i = 0; i < Weights.Count; i++)
+			{
+				currentDistance = Vector3.SqrMagnitude(vertexArray[Weights[i].Index] - sphereCentre);
+
+				if (currentDistance > radius)
+				{
+					radius = currentDistance;
+				}
+			}*/
+				
+		}
+
 		public Bone()
 		{
 			Weights = new List<VertexWeight>();
@@ -190,5 +217,28 @@ public class SkinnedMeshCollider : MonoBehaviour
 	private void LateUpdate()
 	{
 		UpdateCollisionMesh();
+	}
+
+	private void OnDrawGizmosSelected()
+	{
+		if (bones == null || skinnedMesh == null)
+		{
+			ExtractMeshData();
+		}
+
+		/*for (int i = 0; i < bones.Length; i++)
+		{
+			float radius = 0;
+			Vector3 sphereCenter = Vector3.zero;
+
+			bones[i].CalculateBoundingSphere(vertices, ref sphereCenter, ref radius);
+
+			//Gizmos.DrawWireSphere(sphereCenter, radius);
+		}*/
+
+		for (int i = 0; i < vertices.Length; i++)
+		{
+			Gizmos.DrawWireSphere(transform.localToWorldMatrix.MultiplyPoint3x4(vertices[i]), 0.1f);
+		}
 	}
 }
