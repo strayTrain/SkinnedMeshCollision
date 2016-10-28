@@ -82,24 +82,17 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 		public void CalculateTriangles(Vector3[] vertexArray, int[] triangleArray)
 		{
-			// Go through the triangle array
-			triangleIndices = new List<int>(1000);
-			for (int i = 0; i < triangleArray.Length; i += 3)
-			{
-				//Debug.Log(i);
-				// Go thorugh every weight
-				/*for (int j = 0; j < Weights.Count; j++)
-				{
-					int currentIndex = Weights[j].Index;
+			triangleIndices.Clear();
 
-					if (triangleArray[i] == currentIndex || triangleArray[i+1] == currentIndex || triangleArray[i+3] == currentIndex)
+			for (int i = 0; i < triangleArray.Length; i +=3)
+			{
+				for (int j = 0; j < uniqueVertexIndices.Count; j++)
+				{
+					if (uniqueVertexIndices[j] == i && !triangleIndices.Contains(i))
 					{
-						if (triangleIndices.Contains(i))
-						{
-							TriangleIndices.Add(i);
-						}
-					}
-				}*/
+						triangleIndices.Add(i);
+					}	
+				}
 			}
 		}
 
