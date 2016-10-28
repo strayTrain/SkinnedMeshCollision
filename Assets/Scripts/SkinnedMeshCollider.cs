@@ -80,18 +80,20 @@ public class SkinnedMeshCollider : MonoBehaviour
 			}
 		}
 
-		public void CalculateTriangles(Vector3[] vertexArray, int[] triangleArray)
+		public void CalculateTriangles(int[] triangleArray)
 		{
 			triangleIndices.Clear();
 
 			for (int i = 0; i < triangleArray.Length; i +=3)
 			{
-				for (int j = 0; j < uniqueVertexIndices.Count; j++)
+				int a = triangleArray[i];
+				int b = triangleArray[i+1];
+				int c = triangleArray[i+2];
+
+				// Check if the vertices that make up the current triangle are present in the vertices this bone moves
+				if (uniqueVertexIndices.Contains(a) && uniqueVertexIndices.Contains(b) && uniqueVertexIndices.Contains(c))
 				{
-					if (uniqueVertexIndices[j] == i && !triangleIndices.Contains(i))
-					{
-						triangleIndices.Add(i);
-					}	
+					triangleIndices.Add(i);	
 				}
 			}
 		}
@@ -172,7 +174,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 		for (int i = 0; i < bones.Length; i++)
 		{
 			bones[i].CalculateUniqueVertexIndices();
-			bones[i].CalculateTriangles(vertices, triangles);
+			bones[i].CalculateTriangles(triangles);
 		}
 	}
 
@@ -301,8 +303,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 			int uniqueVertexIndicesCount = bones[BoneIndexToVisualise].UniqueVertexIndices.Count;
 
-			Gizmos.color = Color.blue;
-
+			Gizmos.color = Color.white;
 			// Draw the verts
 			for (int i = 0; i < uniqueVertexIndicesCount; i++)
 			{
@@ -311,13 +312,14 @@ public class SkinnedMeshCollider : MonoBehaviour
 			}
 
 			// Draw the triangles
+			Gizmos.color = Color.red;
 			for (int i = 0; i < bones[BoneIndexToVisualise].TriangleIndices.Count; i++)
 			{
 				int currentTriangleIndex = bones[BoneIndexToVisualise].TriangleIndices[i];
 
-				Vector3 a = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex]);
-				Vector3 b = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex+1]);
-				Vector3 c = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[currentTriangleIndex+2]);
+				Vector3 a = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[ triangles[currentTriangleIndex] ]);
+				Vector3 b = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[ triangles[currentTriangleIndex + 1] ]);
+				Vector3 c = transform.localToWorldMatrix.MultiplyPoint3x4(vertices[ triangles[currentTriangleIndex + 2] ]);
 
 				Gizmos.DrawLine(a, b);
 				Gizmos.DrawLine(b, c);
