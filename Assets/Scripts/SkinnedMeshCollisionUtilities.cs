@@ -8,6 +8,7 @@ public struct SkinnedMeshHit
 	public Vector3 normal;
 	public Vector3 barycentricCoordinate;
 	public int triangleIndex;
+	public Transform bone;
 }
 
 public static class SkinnedMeshCollisionUtilities

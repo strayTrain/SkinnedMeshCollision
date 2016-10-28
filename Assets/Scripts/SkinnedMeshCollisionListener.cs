@@ -53,7 +53,7 @@ public class SkinnedMeshCollisionListener : MonoBehaviour
 		{
 			if (skinnedMeshColliders[i].SphereCastAll(sphereCastPosition, Radius, ref hits))
 			{
-				Debug.Log("Collision!");
+				//Debug.Log("Collision!");
 			}
 		}
 	}
