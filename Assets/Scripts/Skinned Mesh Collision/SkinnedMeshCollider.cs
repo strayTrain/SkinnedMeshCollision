@@ -214,11 +214,19 @@ public class SkinnedMeshCollider : MonoBehaviour
 		vertices = tempVertices;
 	}
 
-	public bool RaycastAll(Ray ray, ref List<SkinnedMeshHit> hits)
+	public bool RaycastAll(Ray ray, ref List<SkinnedMeshHit> hits, float distance = Mathf.Infinity)
 	{
 		SkinnedMeshHit hit;
 		bool wasRaycastSuccessful = false;
-		hits.Clear();
+
+		if (hits == null)
+		{
+			hits = new List<SkinnedMeshHit>();
+		}
+		else
+		{
+			hits.Clear();
+		}
 
 		for (int i = 0; i < triangles.Length; i += 3)
 		{
@@ -230,10 +238,28 @@ public class SkinnedMeshCollider : MonoBehaviour
 			b = transform.TransformPoint(vertices[triangles[i + 1]]);
 			c = transform.TransformPoint(vertices[triangles[i + 2]]);
 
-			if (SkinnedMeshCollisionUtilities.TriangleRayIntersection(i, a, b, c, ray, out hit))
+			if (SkinnedMeshCollisionUtilities.TriangleRayIntersection(i, a, b, c, ray, out hit, distance))
 			{
 				hits.Add(hit);
 				wasRaycastSuccessful = true;
+			}
+		}
+
+		// Sort the hit results by distance from the ray origin using a bubble sort
+		int k, l;
+		int hitsCount = hits.Count;
+		SkinnedMeshHit tmp;
+
+		for (l = hitsCount - 1; l > 0; l--) 
+		{
+			for (k = 0; k < l; k++) 
+			{
+				if ((ray.origin - hits[k].point).sqrMagnitude > (ray.origin - hits[k + 1].point).sqrMagnitude)
+				{
+					tmp = hits[k];
+					hits [k] = hits[k + 1];
+					hits [k+1] = tmp;
+				}
 			}
 		}
 
@@ -253,7 +279,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 
 			bones[i].CalculateBoundingSphere(transform.localToWorldMatrix, vertices, ref sphereCenter, ref sphereRadius);
 
-			if (Vector3.Distance(sphereCenter, origin) < (sphereRadius + radius))
+			if (SkinnedMeshCollisionUtilities.SphereSphereIntersection(sphereCenter, sphereRadius, origin, radius))
 			{
 				for (int j = 0; j < bones[i].TriangleIndices.Count; j++)
 				{
