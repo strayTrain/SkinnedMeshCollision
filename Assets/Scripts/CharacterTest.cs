@@ -26,7 +26,9 @@ public class CharacterTest : MonoBehaviour
 
 	private void Update()
 	{
-		movementVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));	
+		movementVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+		movementVector = Camera.main.transform.TransformDirection(movementVector.normalized);
+		movementVector.y = 0;	
 	}
 
 	private void FixedUpdate()
@@ -46,6 +48,10 @@ public class CharacterTest : MonoBehaviour
 			{
 				lastHitPos.Add(hits[i].point);
 			}
+
+			Vector3 newPos = hits[0].point + (transform.position - hits[0].point).normalized * Radius;
+			newPos.y += 1 * Time.fixedDeltaTime;
+			transform.position = newPos;
 		}
 	}
 
