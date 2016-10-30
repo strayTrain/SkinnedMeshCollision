@@ -33,13 +33,33 @@ public class CharacterTest : MonoBehaviour
 	{
 		Vector3 targetMovementPosition = transform.position + movementVector * MovementSpeed * Time.fixedDeltaTime;
 
+		//if (!skinnedMeshColliders[0].RaycastAll(new Ray(transform.position, movementVector.normalized), ref hits, Radius))
 		if (CheckForCollisions(targetMovementPosition, skinnedMeshColliders[0]) == false)
 		{
 			transform.position = targetMovementPosition;
 		}
 		else
 		{
+			lastHitPos.Clear();
 
+			for (int i = 0; i < hits.Count; i++)
+			{
+				lastHitPos.Add(hits[i].point);
+			}
 		}
+	}
+
+	List<Vector3> lastHitPos = new List<Vector3>();
+
+	private void OnDrawGizmos()
+	{
+		Gizmos.color = Color.red;
+		for (int i = 0; i < lastHitPos.Count; i++)
+		{
+			Gizmos.DrawSphere(lastHitPos[i], 0.05f);
+		}
+
+		Gizmos.color = Color.green;
+		Gizmos.DrawWireSphere(transform.position + movementVector * MovementSpeed * Time.fixedDeltaTime, Radius);
 	}
 }

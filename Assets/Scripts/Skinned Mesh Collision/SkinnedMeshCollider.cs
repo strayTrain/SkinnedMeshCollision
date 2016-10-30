@@ -245,23 +245,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 			}
 		}
 
-		// Sort the hit results by distance from the ray origin using a bubble sort
-		int k, l;
-		int hitsCount = hits.Count;
-		SkinnedMeshHit tmp;
-
-		for (l = hitsCount - 1; l > 0; l--) 
-		{
-			for (k = 0; k < l; k++) 
-			{
-				if ((ray.origin - hits[k].point).sqrMagnitude > (ray.origin - hits[k + 1].point).sqrMagnitude)
-				{
-					tmp = hits[k];
-					hits [k] = hits[k + 1];
-					hits [k+1] = tmp;
-				}
-			}
-		}
+		SortHitsByDistance(ref hits, ray.origin);
 
 		return wasRaycastSuccessful;
 	}
@@ -295,6 +279,7 @@ public class SkinnedMeshCollider : MonoBehaviour
 					if (SkinnedMeshCollisionUtilities.TriangleSphereIntersection(j, a, b, c, origin, radius, out hit))
 					{
 						hit.bone = bones[i].BoneTransform;
+
 						hits.Add(hit);
 						sphereCastSuccessfull = true;
 					}
@@ -302,7 +287,31 @@ public class SkinnedMeshCollider : MonoBehaviour
 			}
 		}
 
+		SortHitsByDistance(ref hits, origin);
+
 		return sphereCastSuccessfull;
+	}
+
+	// Sort a list of hits by distance from an origin point
+	private void SortHitsByDistance(ref List<SkinnedMeshHit> hits, Vector3 point)
+	{
+		// Sort the hit results by distance from the ray origin using a bubble sort
+		int k, l;
+		int hitsCount = hits.Count;
+		SkinnedMeshHit tmp;
+
+		for (l = hitsCount - 1; l > 0; l--) 
+		{
+			for (k = 0; k < l; k++) 
+			{
+				if ((point - hits[k].point).sqrMagnitude > (point - hits[k + 1].point).sqrMagnitude)
+				{
+					tmp = hits[k];
+					hits [k] = hits[k + 1];
+					hits [k+1] = tmp;
+				}
+			}
+		}	
 	}
 
 	private void Start()

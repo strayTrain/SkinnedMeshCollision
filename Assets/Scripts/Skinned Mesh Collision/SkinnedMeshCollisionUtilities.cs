@@ -114,7 +114,9 @@ public static class SkinnedMeshCollisionUtilities
 		}
 
 		// Step 2: Test against the triangle edges
-		Vector3 ab = b-a;
+		Vector3 hitPoint = Vector3.zero;
+		float hitDistance = Mathf.Infinity;
+		/*Vector3 ab = b-a;
 		Vector3 bc = c-b;
 		Vector3 ca = a-c;
 
@@ -132,8 +134,7 @@ public static class SkinnedMeshCollisionUtilities
 		Vector3 S2BCP = sphereOrigin - bcPoint;
 		Vector3 S2CAP = sphereOrigin - caPoint;
 
-		Vector3 hitPoint;
-		float hitDistance = Mathf.Infinity;
+
 
 		// Now we find the closest projection point
 		if (S2ABP.sqrMagnitude < S2BCP.sqrMagnitude && S2ABP.sqrMagnitude < S2CAP.sqrMagnitude)
@@ -162,8 +163,10 @@ public static class SkinnedMeshCollisionUtilities
 			hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, a, b, c);
 			hit.triangleIndex = triangleIndex;
 
+			Debug.Log("Triangle Edge Case");
+
 			return true;
-		}
+		}*/
 
 		// Step 3: Check verts against sphere center
 		float radiusSquared = sphereRadius * sphereRadius;
@@ -199,7 +202,7 @@ public static class SkinnedMeshCollisionUtilities
 			hit.normal = triangleNormal;
 			hit.barycentricCoordinate = GetBarycentricCoordinate(hit.point, a, b, c);
 			hit.triangleIndex = triangleIndex;
-	
+
 			return true;
 		}
 
