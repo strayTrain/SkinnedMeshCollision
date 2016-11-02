@@ -228,20 +228,34 @@ public class SkinnedMeshCollider : MonoBehaviour
 			hits.Clear();
 		}
 
-		for (int i = 0; i < triangles.Length; i += 3)
+		for (int i = 0; i < bones.Length; i++)
 		{
-			// The 3 verts that make up this triangle
-			Vector3 a, b, c;
+			Vector3 sphereCenter = Vector3.zero;
+			float sphereRadius = 0;
 
-			// Get them in world space
-			a = transform.TransformPoint(vertices[triangles[i]]);
-			b = transform.TransformPoint(vertices[triangles[i + 1]]);
-			c = transform.TransformPoint(vertices[triangles[i + 2]]);
+			bones[i].CalculateBoundingSphere(transform.localToWorldMatrix, vertices, ref sphereCenter, ref sphereRadius);
 
-			if (SkinnedMeshCollisionUtilities.TriangleRayIntersection(i, a, b, c, ray, out hit, distance))
+			if (SkinnedMeshCollisionUtilities.RaySphereIntersection(ray, sphereCenter, sphereRadius))
 			{
-				hits.Add(hit);
-				wasRaycastSuccessful = true;
+				for (int j = 0; j < bones[i].TriangleIndices.Count; j++)
+				{
+					// The 3 verts that make up this triangle
+					Vector3 a, b, c;
+
+					int currentTriangleIndex = bones[i].TriangleIndices[j];
+
+					a = transform.TransformPoint(vertices[ triangles[currentTriangleIndex] ]);
+					b = transform.TransformPoint(vertices[ triangles[currentTriangleIndex + 1] ]);
+					c = transform.TransformPoint(vertices[ triangles[currentTriangleIndex + 2] ]);
+
+					if (SkinnedMeshCollisionUtilities.TriangleRayIntersection(currentTriangleIndex, a, b, c, ray, out hit))
+					{
+						hit.bone = bones[i].BoneTransform;
+
+						hits.Add(hit);
+						wasRaycastSuccessful = true;
+					}
+				}	
 			}
 		}
 

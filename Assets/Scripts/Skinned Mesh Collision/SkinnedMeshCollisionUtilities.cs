@@ -217,44 +217,33 @@ public static class SkinnedMeshCollisionUtilities
 		return distanceSqaured < radiusSquared;
 	}
 
-	public static bool RaySphereIntersection(Ray ray, Vector3 sphereCenter, float sphereRadius, out Vector3 intersectionPoint, out Vector3 normal)
+	public static bool RaySphereIntersection(Ray ray, Vector3 sphereCenter, float sphereRadius)
 	{
-		intersectionPoint = Vector3.zero;
-		normal = Vector3.zero;
-
-		// Calculate ray start's offset from the sphere center
-		Vector3 ray2Sphere = ray.origin - sphereCenter;
-
-		float radiusSquared = sphereRadius * sphereRadius;
-		float ray2SphereDOTdirection = Vector3.Dot(ray2Sphere, ray.direction);
-
-		// The sphere is behind or surrounding the start point.
-		if(ray2SphereDOTdirection < 0 || Vector3.Dot(ray2Sphere, ray2Sphere) < radiusSquared)
+		//solve for tc
+		Vector3 L = sphereCenter - ray.origin;
+		float tc = Vector3.Dot(L, ray.direction);
+		
+		if ( tc < 0 ) 
 		{
 			return false;
 		}
 
-		// Flatten ray2Sphere into the plane passing through c perpendicular to the ray.
-		// This gives the closest approach of the ray to the center.
-		Vector3 a = ray2Sphere - ray2SphereDOTdirection * ray.direction;
+		float d2 = (tc*tc) - (Vector3.Dot(L, L));
+		
+		float radius2 = sphereRadius * sphereRadius;
 
-		float aSquared = Vector3.Dot(a, a);
-
-		// Closest approach is outside the sphere.
-		if(aSquared > radiusSquared)
+		if ( d2 > radius2) 
 		{
-		  return false;
+			return false;
 		}
 
-		// Calculate distance from plane where ray enters/exits the sphere.    
-		float h = Mathf.Sqrt(radiusSquared - aSquared);
+		/*//solve for t1c
+		float t1c = Mathf.Sqrt(radius2 - d2);
 
-		// Calculate intersection point relative to sphere center.
-		Vector3 i = a - h * ray.direction;
-
-		intersectionPoint = sphereCenter + i;
-		normal = i.normalized;
-
+		//solve for intersection points
+		*t1 = tc - t1c;
+		*t2 = tc + t1c;*/
+		
 		return true;
 	}
 }
