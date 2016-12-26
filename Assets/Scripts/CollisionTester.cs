@@ -29,10 +29,12 @@ public class CollisionTester : MonoBehaviour
 	private void OnDrawGizmosSelected()
 	{
 		hits.Clear();
+		SkinnedMeshCollider[] skinnedMeshColliders = GameObject.FindObjectsOfType<SkinnedMeshCollider>();
 
 		if (TestType == CollisionTestType.Raycast)
 		{
-			if (RaycastAll(new Ray(transform.position, transform.forward), ref hits, RaycastLength))
+
+			if (SkinnedMeshCollisionController.RaycastAll(new Ray(transform.position, transform.forward), ref hits, skinnedMeshColliders,RaycastLength))
 			{
 				DrawHitNormals();
 				Gizmos.color = CastColourHit;
@@ -46,7 +48,7 @@ public class CollisionTester : MonoBehaviour
 		}
 		else
 		{
-			if (SphereCastAll(transform.position, SphereCastRadius, ref hits))
+			if (SkinnedMeshCollisionController.SphereCastAll(transform.position, SphereCastRadius, ref hits, skinnedMeshColliders))
 			{
 				DrawHitNormals();
 
@@ -59,47 +61,5 @@ public class CollisionTester : MonoBehaviour
 
 			Gizmos.DrawWireSphere(transform.position, SphereCastRadius);	
 		}
-	}
-
-	private bool RaycastAll(Ray ray, ref List<SkinnedMeshHit> hits, float distance = Mathf.Infinity)
-	{
-		List<SkinnedMeshHit> tmpHits = new List<SkinnedMeshHit>(32);
-		SkinnedMeshCollider[] skinnedMeshColliders = GameObject.FindObjectsOfType<SkinnedMeshCollider>();
-
-		bool wasHitDetected = false;
-
-		for (int i = 0; i < skinnedMeshColliders.Length; i++)
-		{
-			if (skinnedMeshColliders[i].RaycastAll(ray, ref tmpHits, distance))
-			{
-				wasHitDetected = true;
-				hits.AddRange(tmpHits);
-			}	
-		}
-
-		SkinnedMeshCollisionUtilities.SortHitsByDistance(ref hits, ray.origin);
-
-		return wasHitDetected;
-	}
-
-	public bool SphereCastAll(Vector3 origin, float radius, ref List<SkinnedMeshHit> hits)
-	{
-		List<SkinnedMeshHit> tmpHits = new List<SkinnedMeshHit>(32);
-		SkinnedMeshCollider[] skinnedMeshColliders = GameObject.FindObjectsOfType<SkinnedMeshCollider>();
-
-		bool wasHitSuccessful = false;
-
-		for (int i = 0; i < skinnedMeshColliders.Length; i++)
-		{
-			tmpHits.Clear();
-
-			if (skinnedMeshColliders[i].SphereCastAll(origin, radius, ref tmpHits))
-			{
-				wasHitSuccessful = true;
-				hits.AddRange(tmpHits);
-			}
-		}
-
-		return wasHitSuccessful;
 	}
 }

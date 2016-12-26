@@ -114,25 +114,23 @@ public static class SkinnedMeshCollisionUtilities
 	public static bool TriangleSphereIntersection(int triangleIndex, Vector3 a, Vector3 b, Vector3 c, Vector3 sphereOrigin, float sphereRadius, out SkinnedMeshHit hit) 
 	{
 		hit = new SkinnedMeshHit();
-		bool wasCollisionDetected = false;
-
-		Vector3 triangleNormal = Vector3.Cross(b - a, c - a).normalized;
-
 		Vector3 closestPoint = GetClosestPointOnTriangle(sphereOrigin, a, b, c);
-
 		Vector3 v = closestPoint - sphereOrigin;
-		wasCollisionDetected = Vector3.Dot(v, v) <= sphereRadius*sphereRadius;
 
-		if (wasCollisionDetected)
+		if (Vector3.Dot(v, v) <= sphereRadius*sphereRadius)
 		{
 			hit.distance = Vector3.Distance(sphereOrigin, closestPoint);
 			hit.point = closestPoint;
-			hit.normal = triangleNormal;
+			hit.normal = Vector3.Cross(b - a, c - a).normalized;
 			hit.barycentricCoordinate = GetBarycentricCoordinate(closestPoint, a, b, c);
 			hit.triangleIndex = triangleIndex;
-		}
 
-		return wasCollisionDetected;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	public static bool SphereSphereIntersection(Vector3 center1, float radius1, Vector3 center2, float radius2)
@@ -163,20 +161,6 @@ public static class SkinnedMeshCollisionUtilities
 		float radius2 = sphereRadius * sphereRadius;
 
 		if ( d2 > radius2) 
-		{
-			return false;
-		}
-
-		//solve for t1c
-		float t1c = Mathf.Sqrt(radius2 - d2);
-
-		//solve for intersection points
-		Vector3 intersectionPoint1 = ray.origin + ray.direction * (tc - t1c);
-		Vector3 intersectionPoint2 = ray.origin + ray.direction * (tc + t1c);
-
-		// Lastly check if the intersection point are within the distance
-		float distanceSquared = distance * distance;
-		if ((ray.origin - intersectionPoint1).sqrMagnitude >= distanceSquared || (ray.origin - intersectionPoint2).sqrMagnitude >= distanceSquared)
 		{
 			return false;
 		}
