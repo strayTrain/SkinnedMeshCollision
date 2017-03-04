@@ -150,23 +150,23 @@ public class SkinnedMeshCollider : MonoBehaviour
 			// You can have up to 4 bones affecting a vertex
 			if (currentBoneWeight.weight0 != 0.0f)
 			{
-				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex0].MultiplyPoint3x4(vertices[i]);
-				bones[currentBoneWeight.boneIndex0].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight0));
+				Vector3 localPoint = bindPoses[currentBoneWeight.boneIndex0].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex0].Weights.Add(new VertexWeight(i, localPoint, currentBoneWeight.weight0));
 			}
 			if (currentBoneWeight.weight1 != 0.0f)
 			{
-				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex1].MultiplyPoint3x4(vertices[i]);
-				bones[currentBoneWeight.boneIndex1].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight1));
+				Vector3 localPoint = bindPoses[currentBoneWeight.boneIndex1].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex1].Weights.Add(new VertexWeight(i, localPoint, currentBoneWeight.weight1));
 			}
 			if (currentBoneWeight.weight2 != 0.0f)
 			{
-				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex2].MultiplyPoint3x4(vertices[i]);
-				bones[currentBoneWeight.boneIndex2].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight2));
+				Vector3 localPoint = bindPoses[currentBoneWeight.boneIndex2].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex2].Weights.Add(new VertexWeight(i, localPoint, currentBoneWeight.weight2));
 			}
 			if (currentBoneWeight.weight3 != 0.0f)
 			{
-				Vector3 localPt = bindPoses[currentBoneWeight.boneIndex3].MultiplyPoint3x4(vertices[i]);
-				bones[currentBoneWeight.boneIndex3].Weights.Add(new VertexWeight(i, localPt, currentBoneWeight.weight3));
+				Vector3 localPoint = bindPoses[currentBoneWeight.boneIndex3].MultiplyPoint3x4(vertices[i]);
+				bones[currentBoneWeight.boneIndex3].Weights.Add(new VertexWeight(i, localPoint, currentBoneWeight.weight3));
 			}
 		}
 
@@ -331,6 +331,39 @@ public class SkinnedMeshCollider : MonoBehaviour
 		c = local2world.MultiplyPoint3x4(vertices[triangles[triangleIndex + 2]]);	
 
 		return SkinnedMeshCollisionUtilities.BarycentricToWorldPosition(barycentricCoordinate, a, b, c);
+	}
+
+	public Vector3 GetWorldSpaceTriangleNormal(int triangleIndex)
+	{
+		Vector3 a, b, c;
+
+		GetWorldSpaceTriangleVertexPositions(triangleIndex, out a, out b, out c);
+
+		return Vector3.Cross(b - a, c - a).normalized;
+	}
+
+	/// <summary>
+	/// Gets the world space vertex positions of a triangle.
+	/// </summary>
+	/// <returns><c>true</c>, if the triangle index is valid <c>false</c> otherwise.</returns>
+	public bool GetWorldSpaceTriangleVertexPositions(int triangleIndex, out Vector3 a, out Vector3 b, out Vector3 c)
+	{
+		if (triangleIndex < 0 || triangleIndex >= triangles.Length)
+		{
+			a = Vector3.zero;
+			b = Vector3.zero;
+			c = Vector3.zero;
+
+			return false;
+		}
+		else
+		{
+			a = transform.TransformPoint(vertices[triangles[triangleIndex]]);
+			b = transform.TransformPoint(vertices[triangles[triangleIndex + 1]]);
+			c = transform.TransformPoint(vertices[triangles[triangleIndex + 2]]);	
+
+			return true;
+		}
 	}
 
 	private void Start()

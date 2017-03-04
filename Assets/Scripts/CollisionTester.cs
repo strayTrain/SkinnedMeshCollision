@@ -2,9 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class CollisionTester : MonoBehaviour 
+public class CollisionTester : MonoBehaviour
 {
-	public enum CollisionTestType {Raycast, SphereCast}
+	public enum CollisionTestType
+	{
+Raycast,
+		SphereCast
+
+	}
 
 	private List<SkinnedMeshHit> hits = new List<SkinnedMeshHit>(32);
 
@@ -12,6 +17,7 @@ public class CollisionTester : MonoBehaviour
 
 	public float RaycastLength = 10;
 	public float SphereCastRadius = 1;
+	public bool OnlyDrawClosestHit = false;
 
 	public Color CastColourHit = Color.green;
 	public Color CastColourMiss = Color.red;
@@ -20,9 +26,18 @@ public class CollisionTester : MonoBehaviour
 	private void DrawHitNormals()
 	{
 		Gizmos.color = CastHitNormalsColour;
-		for (int i = 0; i < hits.Count; i++)
+
+		if (OnlyDrawClosestHit)
 		{
-			Gizmos.DrawRay(hits[i].point, hits[i].normal);	
+			Gizmos.DrawRay(hits[0].point, hits[0].normal);	
+			Debug.Log(hits[0].barycentricCoordinate);
+		}
+		else
+		{
+			for (int i = 0; i < hits.Count; i++)
+			{
+				Gizmos.DrawRay(hits[i].point, hits[i].normal);	
+			}
 		}
 	}
 
@@ -34,7 +49,7 @@ public class CollisionTester : MonoBehaviour
 		if (TestType == CollisionTestType.Raycast)
 		{
 
-			if (SkinnedMeshCollisionController.RaycastAll(new Ray(transform.position, transform.forward), ref hits, skinnedMeshColliders,RaycastLength))
+			if (SkinnedMeshCollisionController.RaycastAll(new Ray(transform.position, transform.forward), ref hits, skinnedMeshColliders, RaycastLength))
 			{
 				DrawHitNormals();
 				Gizmos.color = CastColourHit;

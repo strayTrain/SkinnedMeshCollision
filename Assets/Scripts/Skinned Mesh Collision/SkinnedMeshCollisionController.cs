@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class SkinnedMeshCollisionController : Singleton<SkinnedMeshCollisionController> 
 {
 	private List<SkinnedMeshCollider> skinnedMeshColliders = new List<SkinnedMeshCollider>(32);
+	private List<SkinnedMeshHit> tmpHits = new List<SkinnedMeshHit>(32);
 
 	public void RegisterSkinnedMeshCollider(SkinnedMeshCollider collider)
 	{
@@ -21,8 +22,6 @@ public class SkinnedMeshCollisionController : Singleton<SkinnedMeshCollisionCont
 
 	public bool RaycastAll(Ray ray, ref List<SkinnedMeshHit> hits, float distance = Mathf.Infinity)
 	{
-		List<SkinnedMeshHit> tmpHits = new List<SkinnedMeshHit>(32);
-
 		bool wasHitDetected = false;
 
 		for (int i = 0; i < skinnedMeshColliders.Count; i++)
@@ -39,6 +38,24 @@ public class SkinnedMeshCollisionController : Singleton<SkinnedMeshCollisionCont
 		SkinnedMeshCollisionUtilities.SortHitsByDistance(ref hits, ray.origin);
 
 		return wasHitDetected;
+	}
+
+	public bool SphereCastAll(Vector3 origin, float radius, ref List<SkinnedMeshHit> hits)
+	{
+		bool wasHitSuccessful = false;
+
+		for (int i = 0; i < skinnedMeshColliders.Count; i++)
+		{
+			tmpHits.Clear();
+
+			if (skinnedMeshColliders[i].SphereCastAll(origin, radius, ref tmpHits))
+			{
+				wasHitSuccessful = true;
+				hits.AddRange(tmpHits);
+			}
+		}
+
+		return wasHitSuccessful;
 	}
 
 	public static bool RaycastAll(Ray ray, ref List<SkinnedMeshHit> hits,  SkinnedMeshCollider[] collidersToCheckAgainst, float distance = Mathf.Infinity)
@@ -61,25 +78,6 @@ public class SkinnedMeshCollisionController : Singleton<SkinnedMeshCollisionCont
 		SkinnedMeshCollisionUtilities.SortHitsByDistance(ref hits, ray.origin);
 
 		return wasHitDetected;
-	}
-
-	public bool SphereCastAll(Vector3 origin, float radius, ref List<SkinnedMeshHit> hits)
-	{
-		List<SkinnedMeshHit> tmpHits = new List<SkinnedMeshHit>(32);
-		bool wasHitSuccessful = false;
-
-		for (int i = 0; i < skinnedMeshColliders.Count; i++)
-		{
-			tmpHits.Clear();
-
-			if (skinnedMeshColliders[i].SphereCastAll(origin, radius, ref tmpHits))
-			{
-				wasHitSuccessful = true;
-				hits.AddRange(tmpHits);
-			}
-		}
-
-		return wasHitSuccessful;
 	}
 
 	public static bool SphereCastAll(Vector3 origin, float radius, ref List<SkinnedMeshHit> hits, SkinnedMeshCollider[] collidersToCheckAgainst)
